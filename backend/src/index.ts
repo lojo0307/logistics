@@ -1,22 +1,24 @@
-import express from 'express';
 import dotenv from 'dotenv';
-import * as admin from 'firebase-admin';
-import cron from 'node-cron';
-
+// 환경 변수를 가장 먼저 로드
 dotenv.config();
 
-// Firebase Admin 초기화
-admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
-  projectId: process.env.FIREBASE_PROJECT_ID
-});
+// Firebase 초기화를 다른 import 전에 수행
+import './config/firebase';
 
-const db = admin.firestore();
+import express from 'express';
+import cron from 'node-cron';
+import authRouter from './routes/auth';
+import cors from 'cors';
 
 const app = express();
 const port = process.env.PORT || 3001;
 
+// 미들웨어
+app.use(cors());
 app.use(express.json());
+
+// 라우터
+app.use('/api/auth', authRouter);
 
 // 기본 라우트
 app.get('/', (req, res) => {
