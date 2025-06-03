@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 export default function PackPage() {
   const [trackingNumber, setTrackingNumber] = useState<string>('');
+  const [isValidTrackingNumber, setIsValidTrackingNumber] = useState<boolean>(false);
   
   // 임시 통계 데이터 (나중에 API로 대체)
   const stats = {
@@ -15,8 +16,30 @@ export default function PackPage() {
     incomplete: 105
   };
 
-  const handleBarcodeScan = (result: string) => {
-    setTrackingNumber(result);
+  const handleBarcodeScan = async (result: string) => {
+    try {
+      // 스프레드시트에서 운송장번호 확인
+      const response = await fetch(`/api/sheets?trackingNumber=${result}`);
+      const data = await response.json();
+
+      if (data.error) {
+        alert('운송장번호 확인 중 오류가 발생했습니다.');
+        return;
+      }
+
+      if (!data.exists) {
+        alert('전산에 해당 운송장번호가 존재하지 않습니다.');
+        setTrackingNumber('');
+        setIsValidTrackingNumber(false);
+        return;
+      }
+
+      setTrackingNumber(result);
+      setIsValidTrackingNumber(true);
+    } catch (error) {
+      console.error('API 호출 중 오류:', error);
+      alert('운송장번호 확인 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -65,7 +88,7 @@ export default function PackPage() {
           <BarcodeScanner onScan={handleBarcodeScan} />
           
           {/* 스캔 결과 */}
-          {trackingNumber && (
+          {isValidTrackingNumber && trackingNumber && (
             <div className="p-4 border-t">
               <p className="text-gray-900">
                 <span className="font-medium">운송장번호:</span> {trackingNumber}
